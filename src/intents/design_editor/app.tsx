@@ -2,13 +2,12 @@ import {
   Box,
   Button,
   FileInput,
+  FormField,
   Rows,
   Text,
   Title,
   Alert,
   LoadingIndicator,
-  Columns,
-  Column,
   ImageCard,
 } from "@canva/app-ui-kit";
 import { useFeatureSupport } from "@canva/app-hooks";
@@ -58,6 +57,9 @@ export const App = () => {
     width: number;
     height: number;
   } | null>(null);
+  const [isSuccessAlertDismissed, setIsSuccessAlertDismissed] = useState(false);
+  const [isNoMetadataAlertDismissed, setIsNoMetadataAlertDismissed] =
+    useState(false);
 
   const hasPrivacyRisks =
     metadata &&
@@ -332,6 +334,8 @@ export const App = () => {
     setCleanedImageSize(null);
     setProcessingState("idle");
     setError(null);
+    setIsSuccessAlertDismissed(false);
+    setIsNoMetadataAlertDismissed(false);
   }, []);
 
   const formatGPS = (lat?: number, lng?: number) => {
@@ -346,20 +350,27 @@ export const App = () => {
   return (
     <div className={styles.scrollContainer}>
       <Rows spacing="2u">
-        <Text size="small" tone="tertiary">
-          <FormattedMessage
-            defaultMessage="Remove hidden metadata (GPS, camera info, date) from your images for privacy protection."
-            description="App description"
-          />
-        </Text>
-
         {error && <Alert tone="critical">{error}</Alert>}
 
         {!selectedFile ? (
-          <FileInput
-            accept={["image/jpeg", "image/png", "image/webp", "image/tiff"]}
-            onDropAcceptedFiles={handleFileSelect}
-            stretchButton
+          <FormField
+            label={intl.formatMessage({
+              defaultMessage: "Select an image",
+              description: "Label for file input",
+            })}
+            description={intl.formatMessage({
+              defaultMessage:
+                "Remove hidden metadata (GPS, camera info, date) from your images for privacy protection.",
+              description: "App description",
+            })}
+            control={(props) => (
+              <FileInput
+                {...props}
+                accept={["image/jpeg", "image/png", "image/webp", "image/tiff"]}
+                onDropAcceptedFiles={handleFileSelect}
+                stretchButton
+              />
+            )}
           />
         ) : (
           <Rows spacing="2u">
@@ -432,12 +443,17 @@ export const App = () => {
 
                 {Object.keys(metadata).length === 0 ||
                 (Object.keys(metadata).length === 1 && metadata.raw) ? (
-                  <Alert tone="positive">
-                    <FormattedMessage
-                      defaultMessage="No metadata found in this image."
-                      description="Message when no metadata is found"
-                    />
-                  </Alert>
+                  !isNoMetadataAlertDismissed && (
+                    <Alert
+                      tone="info"
+                      onDismiss={() => setIsNoMetadataAlertDismissed(true)}
+                    >
+                      <FormattedMessage
+                        defaultMessage="No metadata found in this image."
+                        description="Message when no metadata is found"
+                      />
+                    </Alert>
+                  )
                 ) : (
                   <Box
                     background="neutralLow"
@@ -455,7 +471,6 @@ export const App = () => {
                             formatGPS(metadata.latitude, metadata.longitude) ||
                             ""
                           }
-                          isRisk
                         />
                       )}
                       {metadata.dateTimeOriginal && (
@@ -465,7 +480,6 @@ export const App = () => {
                             description: "Label for date taken",
                           })}
                           value={metadata.dateTimeOriginal}
-                          isRisk
                         />
                       )}
                       {metadata.make && (
@@ -475,7 +489,6 @@ export const App = () => {
                             description: "Label for camera manufacturer",
                           })}
                           value={metadata.make}
-                          isRisk
                         />
                       )}
                       {metadata.model && (
@@ -485,7 +498,6 @@ export const App = () => {
                             description: "Label for camera model",
                           })}
                           value={metadata.model}
-                          isRisk
                         />
                       )}
                       {metadata.software && (
@@ -504,7 +516,6 @@ export const App = () => {
                             description: "Label for artist/creator",
                           })}
                           value={metadata.artist}
-                          isRisk
                         />
                       )}
                       {metadata.copyright && (
@@ -545,38 +556,51 @@ export const App = () => {
                 </Rows>
               </Box>
             ) : processingState === "done" ? (
-              <Rows spacing="1u">
-                <Alert tone="positive">
-                  <FormattedMessage
-                    defaultMessage="Metadata removed successfully!"
-                    description="Success message after cleaning"
-                  />
-                </Alert>
-                <Alert tone="info">
-                  <FormattedMessage
-                    defaultMessage="Click or drag the image below to add it to your design."
-                    description="Instructions for adding image to design"
-                  />
-                </Alert>
-                {cleanedImageUrl && (
-                  <Box>
-                    <ImageCard
-                      ariaLabel={intl.formatMessage({
-                        defaultMessage:
-                          "Cleaned image - click or drag to add to your design",
-                        description: "Aria label for draggable cleaned image",
-                      })}
-                      thumbnailUrl={cleanedImageUrl}
-                      onClick={handleClick}
-                      onDragStart={handleDragStart}
-                      borderRadius="standard"
-                      alt={intl.formatMessage({
-                        defaultMessage: "Image with metadata removed",
-                        description: "Alt text for cleaned image preview",
-                      })}
+              <Rows spacing="2u">
+                {!isSuccessAlertDismissed && (
+                  <Alert
+                    tone="positive"
+                    onDismiss={() => setIsSuccessAlertDismissed(true)}
+                  >
+                    <FormattedMessage
+                      defaultMessage="Metadata removed successfully!"
+                      description="Success message after cleaning"
                     />
-                  </Box>
+                  </Alert>
                 )}
+                <Rows spacing="1u">
+                  <Title size="small">
+                    <FormattedMessage
+                      defaultMessage="Cleaned image"
+                      description="Header for cleaned image section"
+                    />
+                  </Title>
+                  {cleanedImageUrl && (
+                    <Box>
+                      <ImageCard
+                        ariaLabel={intl.formatMessage({
+                          defaultMessage:
+                            "Cleaned image - click or drag to add to your design",
+                          description: "Aria label for draggable cleaned image",
+                        })}
+                        thumbnailUrl={cleanedImageUrl}
+                        onClick={handleClick}
+                        onDragStart={handleDragStart}
+                        borderRadius="standard"
+                        alt={intl.formatMessage({
+                          defaultMessage: "Image with metadata removed",
+                          description: "Alt text for cleaned image preview",
+                        })}
+                      />
+                    </Box>
+                  )}
+                  <Alert tone="info">
+                    <FormattedMessage
+                      defaultMessage="Click or drag the image above to add it to your design."
+                      description="Instructions for adding image to design"
+                    />
+                  </Alert>
+                </Rows>
                 <Button variant="secondary" onClick={handleReset} stretch>
                   {intl.formatMessage({
                     defaultMessage: "Clean another image",
@@ -612,30 +636,18 @@ export const App = () => {
   );
 };
 
-// Helper component for metadata rows
+// Helper component for metadata rows - stacked layout for better localization support
 const MetadataRow = ({
   label,
   value,
-  isRisk = false,
 }: {
   label: string;
   value: string;
-  isRisk?: boolean;
 }) => (
-  <Columns spacing="1u">
-    <Column width="content">
-      <Text size="small" tone={isRisk ? "critical" : "secondary"}>
-        <FormattedMessage
-          defaultMessage="{label}:"
-          description="Metadata label with colon"
-          values={{ label }}
-        />
-      </Text>
-    </Column>
-    <Column>
-      <Text size="small" tone={isRisk ? "primary" : "tertiary"}>
-        {value}
-      </Text>
-    </Column>
-  </Columns>
+  <Rows spacing="0u">
+    <Text size="small" variant="bold">
+      {label}
+    </Text>
+    <Text size="small">{value}</Text>
+  </Rows>
 );
