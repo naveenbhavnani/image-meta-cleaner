@@ -557,18 +557,18 @@ export const App = () => {
               </Box>
             ) : processingState === "done" ? (
               <Rows spacing="2u">
-                {!isSuccessAlertDismissed && (
-                  <Alert
-                    tone="positive"
-                    onDismiss={() => setIsSuccessAlertDismissed(true)}
-                  >
-                    <FormattedMessage
-                      defaultMessage="Metadata removed successfully!"
-                      description="Success message after cleaning"
-                    />
-                  </Alert>
-                )}
                 <Rows spacing="1u">
+                  {!isSuccessAlertDismissed && (
+                    <Alert
+                      tone="positive"
+                      onDismiss={() => setIsSuccessAlertDismissed(true)}
+                    >
+                      <FormattedMessage
+                        defaultMessage="Metadata removed successfully. Drag the image to add it to your design."
+                        description="Success message after cleaning with drag instruction"
+                      />
+                    </Alert>
+                  )}
                   <Title size="small">
                     <FormattedMessage
                       defaultMessage="Cleaned image"
@@ -594,12 +594,6 @@ export const App = () => {
                       />
                     </Box>
                   )}
-                  <Alert tone="info">
-                    <FormattedMessage
-                      defaultMessage="Click or drag the image above to add it to your design."
-                      description="Instructions for adding image to design"
-                    />
-                  </Alert>
                 </Rows>
                 <Button variant="secondary" onClick={handleReset} stretch>
                   {intl.formatMessage({
