@@ -564,8 +564,8 @@ export const App = () => {
                       onDismiss={() => setIsSuccessAlertDismissed(true)}
                     >
                       <FormattedMessage
-                        defaultMessage="Metadata removed successfully. Drag the image to add it to your design."
-                        description="Success message after cleaning with drag instruction"
+                        defaultMessage="Metadata removed successfully!"
+                        description="Success message after cleaning"
                       />
                     </Alert>
                   )}
@@ -595,6 +595,12 @@ export const App = () => {
                     </Box>
                   )}
                 </Rows>
+                <Button variant="primary" onClick={handleClick} stretch>
+                  {intl.formatMessage({
+                    defaultMessage: "Add to design",
+                    description: "Button to add cleaned image to design",
+                  })}
+                </Button>
                 <Button variant="secondary" onClick={handleReset} stretch>
                   {intl.formatMessage({
                     defaultMessage: "Clean another image",

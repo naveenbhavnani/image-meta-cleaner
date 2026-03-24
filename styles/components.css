@@ -6,7 +6,7 @@
   padding-top: var(--ui-kit-space-200);
   padding-right: var(--ui-kit-space-200);
   padding-bottom: var(--ui-kit-space-200);
-  padding-left: var(--ui-kit-space-200);
+  padding-left: 0;
 
   /* for firefox */
   scrollbar-width: thin;
