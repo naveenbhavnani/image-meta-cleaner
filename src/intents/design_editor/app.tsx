@@ -43,6 +43,15 @@ interface MetadataInfo {
 
 type ProcessingState = "idle" | "reading" | "cleaning" | "done";
 
+const MAX_FILE_SIZE_MB = 20;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+const ACCEPTED_MIME_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/tiff",
+]);
+
 export const App = () => {
   const intl = useIntl();
   const isSupported = useFeatureSupport();
@@ -78,6 +87,39 @@ export const App = () => {
     setError(null);
     setCleanedImageUrl(null);
     setMetadata(null);
+    setSelectedFile(null);
+    setImagePreview(null);
+    setProcessingState("idle");
+
+    // Validate file type — reject entirely, no point proceeding
+    if (!ACCEPTED_MIME_TYPES.has(file.type)) {
+      setError(
+        intl.formatMessage({
+          defaultMessage:
+            "Unsupported file format. Please upload a JPEG, PNG, WebP, or TIFF image.",
+          description: "Error message for unsupported file format",
+        })
+      );
+      return;
+    }
+
+    // Validate file size — set error but still load metadata so user can inspect it
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      setError(
+        intl.formatMessage(
+          {
+            defaultMessage:
+              "This image is too large to process ({fileSizeMB} MB). The maximum supported size is {maxSizeMB} MB. Please use a smaller image.",
+            description: "Error message for file exceeding size limit",
+          },
+          {
+            fileSizeMB: (file.size / 1024 / 1024).toFixed(1),
+            maxSizeMB: MAX_FILE_SIZE_MB,
+          }
+        )
+      );
+    }
+
     setSelectedFile(file);
     setProcessingState("reading");
 
@@ -358,11 +400,15 @@ export const App = () => {
               defaultMessage: "Select an image",
               description: "Label for file input",
             })}
-            description={intl.formatMessage({
-              defaultMessage:
-                "Remove hidden metadata (GPS, camera info, date) from your images for privacy protection.",
-              description: "App description",
-            })}
+            description={intl.formatMessage(
+              {
+                defaultMessage:
+                  "Remove hidden metadata (GPS, camera info, date) from your images for privacy protection. Accepted formats: JPEG, PNG, WebP, TIFF. Maximum file size: {maxSizeMB} MB.",
+                description:
+                  "App description with accepted formats and size limit",
+              },
+              { maxSizeMB: MAX_FILE_SIZE_MB }
+            )}
             control={(props) => (
               <FileInput
                 {...props}
@@ -375,9 +421,8 @@ export const App = () => {
         ) : (
           <Rows spacing="2u">
             {/* Image Preview */}
-            {imagePreview && (
+            {imagePreview && !error && (
               <Box background="neutralLow" borderRadius="standard" padding="1u">
-                {/* Using img tag for preview as ImageCard is for different purpose */}
                 {/* eslint-disable-next-line react/forbid-elements */}
                 <img
                   src={imagePreview}
@@ -613,7 +658,7 @@ export const App = () => {
                 <Button
                   variant="primary"
                   onClick={handleCleanMetadata}
-                  disabled={!metadata || processingState === "reading"}
+                  disabled={!!error || !metadata || processingState === "reading"}
                   stretch
                 >
                   {intl.formatMessage({
